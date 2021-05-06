@@ -25,12 +25,12 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['مستخدم اصوات', 'مدير اصوات'],
-        default: 'مستخدم اصوات'
+        enum: ['admin', 'user'],
+        default: 'user'
     },
     password: {
         type: String,
-        required: [true, 'Please add a password'],
+        required: true,
         minlength: 6,
         select: false
     },
