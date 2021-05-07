@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 
 // Controllers 
-const { getMainView } = require('../controllers/mainController');
+const { getOffersList, getOffer } = require('../controllers/offerController');
 
 
 
 
-router.get('/all', getMainView);
+router.get('/all', getOffersList);
 
-router.get('/', getMainView);
+router.get('/:id', getOffer);
 
 
 module.exports = router;

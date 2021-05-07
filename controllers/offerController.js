@@ -6,75 +6,37 @@ const ms = require('ms');
 
 
 // @desc    Return the Offer List
-// @route   GET /offers
+// @route   GET /offer/all
 // @access    Public
-exports.getPollResult = asyncHandler(async (req, res, next) => {
+exports.getOffersList = asyncHandler(async (req, res, next) => {
 
-  const id = req.params.id;
+  // Get  offers List
+  const offers = await OfferModel.find();
 
-  // No id with sent with the request
+  res.json(offers);
+});
+
+// @desc    Return the Offer List
+// @route   GET /offer/:id
+// @access    Public
+exports.getOffer = asyncHandler(async (req, res, next) => {
+
+  const id = req.id;
+
+  // Check if the title and at least  2 options is sent with the request
   if (!id) {
-    return next(new ErrorResponse('الرجاء ارسال جميع المتطلبات', 400));
+    return next(new ErrorResponse('الرجاء إرسال رقم الطلب', 400));
   }
 
+  // Find the offer from the id 
+  const offer = await OfferModel.findById(id);
 
-  // Get the poll from the id
-  const poll = await PollModel.findById(id).select('+adminID');
-
-  // No poll with the given id
-  if (!poll) {
-    return next(new ErrorResponse('الصفحة المطلوبة غير موجودة', 404));
+  // Check if offer exist on the database of not 
+  if (!offer) {
+    return next(new ErrorResponse('لا يوجد طلب بهذا الرقم', 400));
   }
 
-  const cookie = await cookieIsAdmin(req, poll);
-  const login = await loginIsAdmin(req, poll);
-
-
-  // Check if you need to vote before access the result
-  if (poll.hidden != 0) {
-
-    // Get the clint ip address
-    const ip = await getIpAddress(req);
-    if (poll.hidden == 1) {
-      // Check if the user in the database
-      // Or it's the poll admin
-      // If either false redirect to the vote page
-      if (!await AddressModel.getAddress(ip, id)) {
-        if (!cookie && !login) {
-          return res.redirect('/' + id);
-        }
-      }
-    }
-    else {
-      if (!cookie && !login) {
-        return next(new ErrorResponse('لا يمكن الإطلاع على النتائج في هذا التصويت', 401));
-      }
-    }
-
-  }
-  // If user request answers 
-  if (poll.question && (cookie || login)) {
-    const question = await QuestionsModel.findOne({ _id: poll._id, adminID: poll.adminID });
-    poll.answers = question.answers;
-  }
-
-  // Sort the options so the most votes become the first result to appear
-  poll.options.sort((a, b) => b.voteCount - a.voteCount);
-
-  // Add percentage to each option
-  await poll.addPercentageToOptions();
-
-
-
-  poll.admin = cookie || login;
-
-  // Add the poll url to the result to make it easy to copy it
-  const pollUrl = req.protocol + '://' + req.hostname + '/' + id;
-
-  poll.pollUrl = pollUrl;
-
-
-  res.render('resView', { poll });
+  res.json(offer);
 });
 
 
