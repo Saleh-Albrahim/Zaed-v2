@@ -39,69 +39,32 @@ exports.getOffer = asyncHandler(async (req, res, next) => {
   res.json(offer);
 });
 
-
-
-
-// @desc    Create Poll
-// @route   POST /create
+// @desc    Add new offer
+// @route   POST /offer
 // @access    Public
-exports.createPoll = asyncHandler(async (req, res, next) => {
+exports.addOffer = asyncHandler(async (req, res, next) => {
 
-  const { title, options, ip, vpn, hidden, question } = req.body;
+  const { title, city, imageList, type, notes } = req.body;
 
-  // Check if the title and at least  2 options is sent with the request
-  if (!title.trim() || options.length < 2) {
-    return next(new ErrorResponse('الرجاء ارسال جميع المتطلبات', 400, true));
-  }
-
-  // Check if login user created this poll or a guest
-  // If guest generate token
-  let adminID;
-
-  if (!(req.user || req.cookies.adminID)) {
-    adminID = await UserModel.generateAdminToken();
-    await createAdminToken(res, adminID);
-  }
-  else {
-    adminID = req.user ? req.user._id : req.cookies.adminID;
+  // Check if the required data is sent with the request
+  if (!title || !!city || !imageList || !type || !notes) {
+    return next(new ErrorResponse('الرجاء إرسال جميع المتطلبات', 400));
   }
 
 
+  // Create new offer
+  const newOffer = await OfferModel.create(req.body);
 
-  // Create new Poll
-  const newPoll = await PollModel.create({
-    adminID, title, options: JSON.parse(options),
-    ipAddress: ip, vpn: !vpn, hidden, question
-  });
-
-  if (hidden != 0 || ip) { await AddressModel.create({ _id: newPoll._id }); }
-  if (question) { await QuestionsModel.create({ _id: newPoll._id, adminID }); }
-
+  // Check if the offer added 
+  if (!newOffer) {
+    return next(new ErrorResponse('لم يتم إضافة الطلب .. الرجاء المحاولة في وقت اخر', 500));
+  }
 
   res.json({
-    success: true,
-    status: 200,
-    id: newPoll.id,
-    message: 'تم إنشاء التصويت بـ نجاح'
+    message: 'تم إضافة الطلب بنجاح'
   });
-
 });
 
-const createAdminToken = async (res, adminID) => {
-
-
-  const options = {
-    expires: new Date(Date.now() + ms('30d')),
-    httpOnly: false
-  };
-
-  if (process.env.NODE_ENV == 'production') {
-    options.secure = true;
-  }
-
-  res.cookie('adminID', adminID, options);
-
-};
 
 
 

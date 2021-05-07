@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
-// Controllers 
 const { getMainMessage, getTypesList, getCitiesList } = require('../controllers/mainController');
 
 
